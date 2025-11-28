@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle padding for adaptive icon safe zone -->
+    <!-- Tree/branch icon representing the Loom -->
+    <group
+        android:translateX="22"
+        android:translateY="22">
+        <!-- Trunk -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30,58 L30,48 L34,48 L34,58 Z"/>
+        <!-- Main branches -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M32,48 L32,38 L20,28 L24,24 L32,32 L32,20 L28,20 L32,12 L36,20 L32,20 L32,32 L40,24 L44,28 L32,38 Z"/>
+        <!-- Left branch node -->
+        <path
+            android:fillColor="#A7F3D0"
+            android:pathData="M20,28 m-4,0 a4,4 0,1 1,8 0 a4,4 0,1 1,-8 0"/>
+        <!-- Right branch node -->
+        <path
+            android:fillColor="#A7F3D0"
+            android:pathData="M44,28 m-4,0 a4,4 0,1 1,8 0 a4,4 0,1 1,-8 0"/>
+        <!-- Top node -->
+        <path
+            android:fillColor="#FDE68A"
+            android:pathData="M32,12 m-5,0 a5,5 0,1 1,10 0 a5,5 0,1 1,-10 0"/>
+    </group>
+</vector>
