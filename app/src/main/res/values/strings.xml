@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bedrock Loom</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Actions -->
+    <string name="action_new_tree">New Tree</string>
+    <string name="action_branch">Branch</string>
+    <string name="action_generate">Generate</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_star">Star</string>
+    <string name="action_unstar">Unstar</string>
+    <string name="action_hide">Hide</string>
+    <string name="action_show">Show</string>
+    <string name="action_export">Export</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_search">Search</string>
+    
+    <!-- Labels -->
+    <string name="label_temperature">Temperature</string>
+    <string name="label_branch_count">Branches</string>
+    <string name="label_max_tokens">Max Tokens</string>
+    <string name="label_model">Model</string>
+    <string name="label_system_prompt">System Prompt</string>
+    <string name="label_root_prompt">Root Prompt</string>
+    <string name="label_tags">Tags</string>
+    <string name="label_notes">Notes</string>
+    
+    <!-- Placeholders -->
+    <string name="placeholder_root_prompt">Enter your initial prompt…</string>
+    <string name="placeholder_system_prompt">Optional system prompt…</string>
+    <string name="placeholder_search">Search across all branches…</string>
+    
+    <!-- Settings -->
+    <string name="settings_aws_title">AWS Configuration</string>
+    <string name="settings_aws_region">Region</string>
+    <string name="settings_aws_access_key">Access Key ID</string>
+    <string name="settings_aws_secret_key">Secret Access Key</string>
+    <string name="settings_generation_title">Generation Defaults</string>
+    <string name="settings_default_model">Default Model</string>
+    <string name="settings_default_temperature">Default Temperature</string>
+    <string name="settings_default_branches">Default Branch Count</string>
+    <string name="settings_default_max_tokens">Default Max Tokens</string>
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    
+    <!-- Empty states -->
+    <string name="empty_trees">No trees yet.\nTap + to start weaving.</string>
+    <string name="empty_search">No results found.</string>
+    <string name="empty_starred">No starred branches yet.</string>
+    
+    <!-- Errors -->
+    <string name="error_generic">Something went wrong</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_aws_credentials">Invalid AWS credentials</string>
+    <string name="error_bedrock_access">Bedrock model access denied. Please check your AWS permissions.</string>
+    <string name="error_generation_failed">Generation failed</string>
+    
+    <!-- Confirmations -->
+    <string name="confirm_delete_tree">Delete this tree and all its branches?</string>
+    <string name="confirm_delete_subtree">Delete this branch and all its children?</string>
+    
+    <!-- Accessibility -->
+    <string name="cd_node_starred">Starred</string>
+    <string name="cd_node_hidden">Hidden</string>
+    <string name="cd_playhead">Current position</string>
+    <string name="cd_expand_tree">Expand tree view</string>
+    <string name="cd_collapse_tree">Collapse tree view</string>
+</resources>

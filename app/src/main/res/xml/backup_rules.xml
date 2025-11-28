@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include the Room database -->
+    <include domain="database" path="loom_database" />
+    
+    <!-- Include DataStore preferences -->
+    <include domain="sharedpref" path="." />
+    
+    <!-- Exclude sensitive credentials -->
+    <exclude domain="sharedpref" path="aws_credentials.preferences_pb" />
+</full-backup-content>
