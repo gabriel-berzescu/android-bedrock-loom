@@ -89,16 +89,31 @@ class BedrockClient @Inject constructor(
         systemPrompt: String? = null,
         onChunk: (String) -> Unit
     ): Result<String> {
-        return try {
-            val credentialsText = appPreferences.awsCredentials.first()
-            val parsedCreds = appPreferences.parseCredentials(credentialsText)
+        val credentialsText: String
+        val parsedCreds: ParsedCredentials
+        val region: String
+        val modelId: String
+        
+        try {
+            credentialsText = appPreferences.awsCredentials.first()
+            parsedCreds = appPreferences.parseCredentials(credentialsText)
                 ?: return Result.failure(Exception("Invalid or missing AWS credentials. Please configure in Settings."))
-            
-            val region = appPreferences.awsRegion.first()
-            val modelId = appPreferences.modelId.first()
-            
-            val client = createClient(parsedCreds, region)
-            
+            region = appPreferences.awsRegion.first()
+            modelId = appPreferences.modelId.first()
+        } catch (e: Exception) {
+            return Result.failure(Exception("Failed to load settings: ${e.message}"))
+        }
+        
+        val client: BedrockRuntimeClient
+        try {
+            client = createClient(parsedCreds, region)
+        } catch (e: Exception) {
+            return Result.failure(Exception("Failed to create Bedrock client: ${e.message}"))
+        }
+        
+        val fullResponse = StringBuilder()
+        
+        try {
             val messages = conversationHistory.map { msg ->
                 Message {
                     role = when (msg.role) {
@@ -119,8 +134,6 @@ class BedrockClient @Inject constructor(
                 }
             }
             
-            val fullResponse = StringBuilder()
-            
             client.converseStream(request) { response ->
                 response.stream?.collect { event ->
                     when (event) {
@@ -136,12 +149,23 @@ class BedrockClient @Inject constructor(
                     }
                 }
             }
-            
-            client.close()
-            Result.success(fullResponse.toString())
         } catch (e: Exception) {
-            Result.failure(e)
+            // If we already got some response, return it as success
+            if (fullResponse.isNotEmpty()) {
+                try { client.close() } catch (_: Exception) {}
+                return Result.success(fullResponse.toString())
+            }
+            try { client.close() } catch (_: Exception) {}
+            return Result.failure(Exception("Bedrock API error: ${e.message}"))
         }
+        
+        try {
+            client.close()
+        } catch (_: Exception) {
+            // Ignore close errors
+        }
+        
+        return Result.success(fullResponse.toString())
     }
     
     private fun createClient(credentials: ParsedCredentials, region: String): BedrockRuntimeClient {
