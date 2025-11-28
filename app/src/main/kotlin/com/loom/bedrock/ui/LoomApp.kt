@@ -1,44 +1,95 @@
 package com.loom.bedrock.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.loom.bedrock.ui.screens.ChatScreen
+import com.loom.bedrock.ui.screens.SettingsScreen
 import com.loom.bedrock.ui.theme.LoomTheme
 
 /**
- * Main app entry point composable.
- * 
- * This will eventually contain:
- * - Navigation host
- * - Tree list screen
- * - Loom screen (tree visualization)
- * - Settings screen
+ * Navigation routes for the app.
+ */
+object Routes {
+    const val HOME = "home"
+    const val CHAT = "chat"
+    const val SETTINGS = "settings"
+}
+
+/**
+ * Main app entry point composable with navigation.
  */
 @Composable
 fun LoomApp() {
-    Scaffold { paddingValues ->
-        // Placeholder until navigation is set up
+    val navController = rememberNavController()
+    
+    NavHost(
+        navController = navController,
+        startDestination = Routes.HOME
+    ) {
+        composable(Routes.HOME) {
+            HomeScreen(
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                onStartChat = { navController.navigate(Routes.CHAT) }
+            )
+        }
+        
+        composable(Routes.CHAT) {
+            ChatScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                onNavigateToTree = { /* TODO: Tree view */ }
+            )
+        }
+        
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+    }
+}
+
+/**
+ * Home screen with welcome message and settings access.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    onNavigateToSettings: () -> Unit,
+    onStartChat: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Bedrock Loom") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
         WelcomeScreen(
             modifier = Modifier.padding(paddingValues),
-            onGetStarted = { /* TODO: Navigate to tree creation */ }
+            onStartChat = onStartChat,
+            onOpenSettings = onNavigateToSettings
         )
     }
 }
@@ -49,7 +100,8 @@ fun LoomApp() {
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,
-    onGetStarted: () -> Unit,
+    onStartChat: () -> Unit,
+    onOpenSettings: () -> Unit = {}
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
@@ -78,7 +130,7 @@ fun WelcomeScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Weave realities through probabilistic space",
+                text = "Weave conversations through probabilistic space",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -86,14 +138,26 @@ fun WelcomeScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            Button(onClick = onGetStarted) {
-                Text("Start Weaving")
+            Button(onClick = onStartChat) {
+                Text("Start New Chat")
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            OutlinedButton(onClick = onOpenSettings) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Configure AWS Credentials")
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Configure AWS credentials in Settings to begin",
+                text = "Set up your AWS credentials in Settings to connect to Claude",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -106,7 +170,7 @@ fun WelcomeScreen(
 @Composable
 fun WelcomeScreenPreview() {
     LoomTheme {
-        WelcomeScreen(onGetStarted = {})
+        WelcomeScreen(onStartChat = {})
     }
 }
 
@@ -114,6 +178,6 @@ fun WelcomeScreenPreview() {
 @Composable
 fun WelcomeScreenDarkPreview() {
     LoomTheme(darkTheme = true) {
-        WelcomeScreen(onGetStarted = {})
+        WelcomeScreen(onStartChat = {})
     }
 }
