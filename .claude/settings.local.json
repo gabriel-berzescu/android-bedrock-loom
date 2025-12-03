@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew installDebug:*)"
+      "Bash(./gradlew installDebug:*)",
+      "Bash(./gradlew build:*)"
     ],
     "deny": [],
     "ask": []

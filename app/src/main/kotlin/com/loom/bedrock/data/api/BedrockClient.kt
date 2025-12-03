@@ -38,25 +38,35 @@ class BedrockClient @Inject constructor(
             val credentialsText = appPreferences.awsCredentials.first()
             val parsedCreds = appPreferences.parseCredentials(credentialsText)
                 ?: return Result.failure(Exception("Invalid or missing AWS credentials. Please configure in Settings."))
-            
+
             val region = appPreferences.awsRegion.first()
             val modelId = appPreferences.modelId.first()
-            
+            val maxTokens = appPreferences.maxTokens.first()
+
             val client = createClient(parsedCreds, region)
-            
-            val messages = conversationHistory.map { msg ->
-                Message {
-                    role = when (msg.role) {
-                        ChatRole.USER -> ConversationRole.User
-                        ChatRole.ASSISTANT -> ConversationRole.Assistant
-                    }
-                    content = listOf(ContentBlock.Text(msg.content))
+
+            // Concatenate all messages into one user message
+            val concatenatedContent = conversationHistory.joinToString("\n") { msg ->
+                val roleLabel = when (msg.role) {
+                    ChatRole.USER -> "user"
+                    ChatRole.ASSISTANT -> "claude"
                 }
+                "$roleLabel: ${msg.content}"
             }
-            
+
+            val messages = listOf(
+                Message {
+                    role = ConversationRole.User
+                    content = listOf(ContentBlock.Text(concatenatedContent))
+                }
+            )
+
             val request = ConverseRequest {
                 this.modelId = modelId
                 this.messages = messages
+                this.inferenceConfig {
+                    this.maxTokens = maxTokens
+                }
                 if (systemPrompt != null) {
                     this.system = listOf(
                         aws.sdk.kotlin.services.bedrockruntime.model.SystemContentBlock.Text(systemPrompt)
@@ -93,13 +103,15 @@ class BedrockClient @Inject constructor(
         val parsedCreds: ParsedCredentials
         val region: String
         val modelId: String
-        
+        val maxTokens: Int
+
         try {
             credentialsText = appPreferences.awsCredentials.first()
             parsedCreds = appPreferences.parseCredentials(credentialsText)
                 ?: return Result.failure(Exception("Invalid or missing AWS credentials. Please configure in Settings."))
             region = appPreferences.awsRegion.first()
             modelId = appPreferences.modelId.first()
+            maxTokens = appPreferences.maxTokens.first()
         } catch (e: Exception) {
             return Result.failure(Exception("Failed to load settings: ${e.message}"))
         }
@@ -114,19 +126,28 @@ class BedrockClient @Inject constructor(
         val fullResponse = StringBuilder()
         
         try {
-            val messages = conversationHistory.map { msg ->
-                Message {
-                    role = when (msg.role) {
-                        ChatRole.USER -> ConversationRole.User
-                        ChatRole.ASSISTANT -> ConversationRole.Assistant
-                    }
-                    content = listOf(ContentBlock.Text(msg.content))
+            // Concatenate all messages into one user message
+            val concatenatedContent = conversationHistory.joinToString("\n") { msg ->
+                val roleLabel = when (msg.role) {
+                    ChatRole.USER -> "user"
+                    ChatRole.ASSISTANT -> "claude"
                 }
+                "$roleLabel: ${msg.content}"
             }
-            
+
+            val messages = listOf(
+                Message {
+                    role = ConversationRole.User
+                    content = listOf(ContentBlock.Text(concatenatedContent))
+                }
+            )
+
             val request = aws.sdk.kotlin.services.bedrockruntime.model.ConverseStreamRequest {
                 this.modelId = modelId
                 this.messages = messages
+                this.inferenceConfig {
+                    this.maxTokens = maxTokens
+                }
                 if (systemPrompt != null) {
                     this.system = listOf(
                         aws.sdk.kotlin.services.bedrockruntime.model.SystemContentBlock.Text(systemPrompt)

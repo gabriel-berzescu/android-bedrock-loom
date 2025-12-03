@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -137,7 +138,7 @@ class TreeViewModel @Inject constructor(
         layout(root, startX, startY)
     }
     
-    fun selectNode(nodeId: String) {
+    fun selectNode(nodeId: String?) {
         _uiState.value = _uiState.value.copy(selectedNodeId = nodeId)
     }
     
@@ -200,6 +201,13 @@ fun TreeScreen(
                         offsetX += pan.x
                         offsetY += pan.y
                     }
+                }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    // Clear selection when clicking on background
+                    viewModel.selectNode(null)
                 }
         ) {
             if (uiState.isLoading) {

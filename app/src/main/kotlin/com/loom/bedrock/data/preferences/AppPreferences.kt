@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,9 +23,11 @@ class AppPreferences @Inject constructor(
         private val AWS_CREDENTIALS = stringPreferencesKey("aws_credentials")
         private val AWS_REGION = stringPreferencesKey("aws_region")
         private val MODEL_ID = stringPreferencesKey("model_id")
-        
+        private val MAX_TOKENS = intPreferencesKey("max_tokens")
+
         const val DEFAULT_REGION = "eu-west-1"
         const val DEFAULT_MODEL_ID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
+        const val DEFAULT_MAX_TOKENS = 256
     }
     
     /**
@@ -42,7 +45,10 @@ class AppPreferences @Inject constructor(
     
     val modelId: Flow<String> = context.dataStore.data
         .map { preferences -> preferences[MODEL_ID] ?: DEFAULT_MODEL_ID }
-    
+
+    val maxTokens: Flow<Int> = context.dataStore.data
+        .map { preferences -> preferences[MAX_TOKENS] ?: DEFAULT_MAX_TOKENS }
+
     suspend fun setAwsCredentials(credentials: String) {
         context.dataStore.edit { preferences ->
             preferences[AWS_CREDENTIALS] = credentials
@@ -60,7 +66,13 @@ class AppPreferences @Inject constructor(
             preferences[MODEL_ID] = modelId
         }
     }
-    
+
+    suspend fun setMaxTokens(maxTokens: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[MAX_TOKENS] = maxTokens
+        }
+    }
+
     /**
      * Parse the INI-format credentials and extract the values.
      * Returns null if parsing fails.

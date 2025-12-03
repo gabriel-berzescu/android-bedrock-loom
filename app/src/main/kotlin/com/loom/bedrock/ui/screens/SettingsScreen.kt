@@ -35,7 +35,10 @@ class SettingsViewModel @Inject constructor(
     
     val modelId = appPreferences.modelId
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_MODEL_ID)
-    
+
+    val maxTokens = appPreferences.maxTokens
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_MAX_TOKENS)
+
     fun saveCredentials(credentials: String) {
         viewModelScope.launch {
             appPreferences.setAwsCredentials(credentials)
@@ -53,7 +56,13 @@ class SettingsViewModel @Inject constructor(
             appPreferences.setModelId(modelId)
         }
     }
-    
+
+    fun saveMaxTokens(maxTokens: Int) {
+        viewModelScope.launch {
+            appPreferences.setMaxTokens(maxTokens)
+        }
+    }
+
     fun validateCredentials(credentials: String): Boolean {
         return appPreferences.parseCredentials(credentials) != null
     }
@@ -68,10 +77,12 @@ fun SettingsScreen(
     val credentials by viewModel.awsCredentials.collectAsState()
     val region by viewModel.awsRegion.collectAsState()
     val modelId by viewModel.modelId.collectAsState()
-    
+    val maxTokens by viewModel.maxTokens.collectAsState()
+
     var editedCredentials by remember(credentials) { mutableStateOf(credentials) }
     var editedRegion by remember(region) { mutableStateOf(region) }
     var editedModelId by remember(modelId) { mutableStateOf(modelId) }
+    var editedMaxTokens by remember(maxTokens) { mutableStateOf(maxTokens.toString()) }
     var showSaved by remember { mutableStateOf(false) }
     
     val credentialsValid = editedCredentials.isBlank() || viewModel.validateCredentials(editedCredentials)
@@ -171,9 +182,24 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    OutlinedTextField(
+                        value = editedMaxTokens,
+                        onValueChange = { editedMaxTokens = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Max Output Tokens") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+
+                    Text(
+                        text = "Default: ${AppPreferences.DEFAULT_MAX_TOKENS}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
-            
+
             // Region Settings Section
             Card(
                 modifier = Modifier.fillMaxWidth()
@@ -210,6 +236,8 @@ fun SettingsScreen(
                     viewModel.saveCredentials(editedCredentials)
                     viewModel.saveRegion(editedRegion)
                     viewModel.saveModelId(editedModelId)
+                    val maxTokensInt = editedMaxTokens.toIntOrNull() ?: AppPreferences.DEFAULT_MAX_TOKENS
+                    viewModel.saveMaxTokens(maxTokensInt)
                     showSaved = true
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -235,6 +263,7 @@ fun SettingsScreen(
                 onClick = {
                     editedRegion = AppPreferences.DEFAULT_REGION
                     editedModelId = AppPreferences.DEFAULT_MODEL_ID
+                    editedMaxTokens = AppPreferences.DEFAULT_MAX_TOKENS.toString()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

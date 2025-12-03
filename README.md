@@ -78,7 +78,12 @@
 ```bash
 git clone https://github.com/gabriel-berzescu/android-bedrock-loom.git
 cd android-bedrock-loom
+
+# Build only (creates APK in app/build/outputs/apk/debug/)
 ./gradlew assembleDebug
+
+# Build and install to connected device
+./gradlew installDebug
 ```
 
 ### Configuration
