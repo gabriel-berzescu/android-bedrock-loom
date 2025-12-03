@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
@@ -160,7 +161,7 @@ fun TreeScreen(
     var scale by remember { mutableFloatStateOf(0.8f) }
     var offsetX by remember { mutableFloatStateOf(450f) }
     var offsetY by remember { mutableFloatStateOf(100f) }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -179,8 +180,23 @@ fun TreeScreen(
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.surfaceContainerLowest)
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        scale = (scale * zoom).coerceIn(0.3f, 2f)
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        val oldScale = scale
+                        val newScale = (scale * zoom).coerceIn(0.3f, 2f)
+
+                        if (zoom != 1f) {
+                            // Handle zoom: calculate what point in content is under the centroid
+                            val pointBeforeX = (centroid.x - offsetX) / oldScale
+                            val pointBeforeY = (centroid.y - offsetY) / oldScale
+
+                            // After zoom, adjust offset so the same content point is under centroid
+                            offsetX = centroid.x - pointBeforeX * newScale
+                            offsetY = centroid.y - pointBeforeY * newScale
+
+                            scale = newScale
+                        }
+
+                        // Handle pan separately (after zoom)
                         offsetX += pan.x
                         offsetY += pan.y
                     }
@@ -206,6 +222,7 @@ fun TreeScreen(
                             scaleY = scale
                             translationX = offsetX
                             translationY = offsetY
+                            transformOrigin = TransformOrigin(0f, 0f)
                         }
                 ) {
                     // Draw lines first
@@ -266,7 +283,10 @@ fun TreeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Button(
-                                    onClick = { onNavigateToNode(selectedId) },
+                                    onClick = {
+                                        viewModel.setActiveNode(selectedId)
+                                        onNavigateToNode(selectedId)
+                                    },
                                     modifier = Modifier.align(Alignment.End)
                                 ) {
                                     Text("Continue from here")
@@ -293,7 +313,10 @@ fun TreeNodeComposable(
         isActive = node.id == activeNodeId,
         isSelected = node.id == selectedNodeId,
         onClick = { onSelectNode(node.id) },
-        onDoubleClick = { onNavigateToNode(node.id) },
+        onDoubleClick = {
+            // Note: double-click not currently functional, but keeping for future
+            onNavigateToNode(node.id)
+        },
         modifier = Modifier.offset(x = node.x.dp, y = node.y.dp)
     )
     

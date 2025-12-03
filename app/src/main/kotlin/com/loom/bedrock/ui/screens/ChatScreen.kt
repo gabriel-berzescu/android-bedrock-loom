@@ -20,8 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.foundation.text.selection.TextSelectionColors
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -77,6 +82,12 @@ class ChatViewModel @Inject constructor(
         }
     }
     
+    fun reloadConversation() {
+        if (conversationId != null) {
+            loadConversation(conversationId)
+        }
+    }
+
     private fun loadConversation(id: String) {
         viewModelScope.launch {
             val conversationWithNodes = conversationDao.getConversationWithNodes(id)
@@ -84,11 +95,11 @@ class ChatViewModel @Inject constructor(
                 // Build linear path from root to active node (or latest)
                 val nodes = conversationWithNodes.nodes
                 val activeNodeId = conversationWithNodes.conversation.activeNodeId
-                
+
                 val linearPath = buildLinearPath(nodes, activeNodeId)
-                
-                val messages = linearPath.map { 
-                    UiMessage(id = it.id, role = it.role, content = it.content, parentId = it.parentId) 
+
+                val messages = linearPath.map {
+                    UiMessage(id = it.id, role = it.role, content = it.content, parentId = it.parentId)
                 }
                 _uiState.value = _uiState.value.copy(
                     conversationId = id,
@@ -363,7 +374,21 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
-    
+
+    // Reload conversation when returning from tree view
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.reloadConversation()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     LaunchedEffect(uiState.messages.size, uiState.messages.lastOrNull()?.content) {
         if (uiState.messages.isNotEmpty()) {
             listState.animateScrollToItem(uiState.messages.size - 1)
@@ -477,7 +502,12 @@ fun MessageBubble(
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                unfocusedTextColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                unfocusedTextColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                cursorColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectionColors = TextSelectionColors(
+                                    handleColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                                    backgroundColor = if (isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                )
                             )
                         )
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {

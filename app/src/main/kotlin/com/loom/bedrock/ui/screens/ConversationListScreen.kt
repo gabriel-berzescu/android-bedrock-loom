@@ -1,6 +1,8 @@
 package com.loom.bedrock.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -31,13 +33,22 @@ import javax.inject.Inject
 class ConversationListViewModel @Inject constructor(
     private val conversationDao: ConversationDao
 ) : ViewModel() {
-    
+
     val conversations = conversationDao.getAllConversations()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    
+
     fun deleteConversation(id: String) {
         viewModelScope.launch {
             conversationDao.deleteConversation(id)
+        }
+    }
+
+    fun renameConversation(id: String, newTitle: String) {
+        viewModelScope.launch {
+            val conversation = conversationDao.getConversation(id)
+            if (conversation != null) {
+                conversationDao.updateConversation(id, newTitle)
+            }
         }
     }
 }
@@ -51,6 +62,8 @@ fun ConversationListScreen(
 ) {
     val conversations by viewModel.conversations.collectAsState()
     var conversationToDelete by remember { mutableStateOf<ConversationEntity?>(null) }
+    var conversationToRename by remember { mutableStateOf<ConversationEntity?>(null) }
+    var renameText by remember { mutableStateOf("") }
     
     Scaffold(
         topBar = {
@@ -107,6 +120,10 @@ fun ConversationListScreen(
                     ConversationCard(
                         conversation = conversation,
                         onClick = { onNavigateToChat(conversation.id) },
+                        onLongClick = {
+                            conversationToRename = conversation
+                            renameText = conversation.title
+                        },
                         onDelete = { conversationToDelete = conversation }
                     )
                 }
@@ -137,21 +154,69 @@ fun ConversationListScreen(
             }
         )
     }
+
+    // Rename dialog
+    conversationToRename?.let { conversation ->
+        AlertDialog(
+            onDismissRequest = {
+                conversationToRename = null
+                renameText = ""
+            },
+            title = { Text("Rename Conversation") },
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    label = { Text("Title") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (renameText.isNotBlank()) {
+                            viewModel.renameConversation(conversation.id, renameText.trim())
+                        }
+                        conversationToRename = null
+                        renameText = ""
+                    },
+                    enabled = renameText.isNotBlank()
+                ) {
+                    Text("Rename")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        conversationToRename = null
+                        renameText = ""
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ConversationCard(
     conversation: ConversationEntity,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dateFormat = remember { SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()) }
-    
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     ) {
         Row(
             modifier = Modifier
