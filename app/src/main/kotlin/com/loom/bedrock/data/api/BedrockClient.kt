@@ -45,21 +45,16 @@ class BedrockClient @Inject constructor(
 
             val client = createClient(parsedCreds, region)
 
-            // Concatenate all messages into one user message
-            val concatenatedContent = conversationHistory.joinToString("\n") { msg ->
-                val roleLabel = when (msg.role) {
-                    ChatRole.USER -> "user"
-                    ChatRole.ASSISTANT -> "claude"
-                }
-                "$roleLabel: ${msg.content}"
-            }
-
-            val messages = listOf(
+            // Convert conversation history to Bedrock message format
+            val messages = conversationHistory.map { msg ->
                 Message {
-                    role = ConversationRole.User
-                    content = listOf(ContentBlock.Text(concatenatedContent))
+                    role = when (msg.role) {
+                        ChatRole.USER -> ConversationRole.User
+                        ChatRole.ASSISTANT -> ConversationRole.Assistant
+                    }
+                    content = listOf(ContentBlock.Text(msg.content))
                 }
-            )
+            }
 
             val request = ConverseRequest {
                 this.modelId = modelId
@@ -124,23 +119,18 @@ class BedrockClient @Inject constructor(
         }
         
         val fullResponse = StringBuilder()
-        
-        try {
-            // Concatenate all messages into one user message
-            val concatenatedContent = conversationHistory.joinToString("\n") { msg ->
-                val roleLabel = when (msg.role) {
-                    ChatRole.USER -> "user"
-                    ChatRole.ASSISTANT -> "claude"
-                }
-                "$roleLabel: ${msg.content}"
-            }
 
-            val messages = listOf(
+        try {
+            // Convert conversation history to Bedrock message format
+            val messages = conversationHistory.map { msg ->
                 Message {
-                    role = ConversationRole.User
-                    content = listOf(ContentBlock.Text(concatenatedContent))
+                    role = when (msg.role) {
+                        ChatRole.USER -> ConversationRole.User
+                        ChatRole.ASSISTANT -> ConversationRole.Assistant
+                    }
+                    content = listOf(ContentBlock.Text(msg.content))
                 }
-            )
+            }
 
             val request = aws.sdk.kotlin.services.bedrockruntime.model.ConverseStreamRequest {
                 this.modelId = modelId

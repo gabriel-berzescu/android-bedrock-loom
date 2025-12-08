@@ -266,7 +266,7 @@ class ChatViewModel @Inject constructor(
             
             val result = bedrockClient.chatStream(
                 conversationHistory = conversationHistory,
-                systemPrompt = "base model emulator. predict next words. nothing else.",
+                systemPrompt = "You are Claude Opus 4.5",
                 onChunk = { chunk ->
                     val messages = _uiState.value.messages.toMutableList()
                     val lastIndex = messages.lastIndex
