@@ -39,6 +39,9 @@ class SettingsViewModel @Inject constructor(
     val maxTokens = appPreferences.maxTokens
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_MAX_TOKENS)
 
+    val systemPrompt = appPreferences.systemPrompt
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_SYSTEM_PROMPT)
+
     fun saveCredentials(credentials: String) {
         viewModelScope.launch {
             appPreferences.setAwsCredentials(credentials)
@@ -63,6 +66,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun saveSystemPrompt(systemPrompt: String) {
+        viewModelScope.launch {
+            appPreferences.setSystemPrompt(systemPrompt)
+        }
+    }
+
     fun validateCredentials(credentials: String): Boolean {
         return appPreferences.parseCredentials(credentials) != null
     }
@@ -78,11 +87,13 @@ fun SettingsScreen(
     val region by viewModel.awsRegion.collectAsState()
     val modelId by viewModel.modelId.collectAsState()
     val maxTokens by viewModel.maxTokens.collectAsState()
+    val systemPrompt by viewModel.systemPrompt.collectAsState()
 
     var editedCredentials by remember(credentials) { mutableStateOf(credentials) }
     var editedRegion by remember(region) { mutableStateOf(region) }
     var editedModelId by remember(modelId) { mutableStateOf(modelId) }
     var editedMaxTokens by remember(maxTokens) { mutableStateOf(maxTokens.toString()) }
+    var editedSystemPrompt by remember(systemPrompt) { mutableStateOf(systemPrompt) }
     var showSaved by remember { mutableStateOf(false) }
     
     val credentialsValid = editedCredentials.isBlank() || viewModel.validateCredentials(editedCredentials)
@@ -200,6 +211,37 @@ fun SettingsScreen(
                 }
             }
 
+            // System Prompt Section
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "System Prompt",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    OutlinedTextField(
+                        value = editedSystemPrompt,
+                        onValueChange = { editedSystemPrompt = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp),
+                        placeholder = { Text(AppPreferences.DEFAULT_SYSTEM_PROMPT) },
+                        maxLines = 5
+                    )
+
+                    Text(
+                        text = "Default: ${AppPreferences.DEFAULT_SYSTEM_PROMPT}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             // Region Settings Section
             Card(
                 modifier = Modifier.fillMaxWidth()
@@ -238,6 +280,7 @@ fun SettingsScreen(
                     viewModel.saveModelId(editedModelId)
                     val maxTokensInt = editedMaxTokens.toIntOrNull() ?: AppPreferences.DEFAULT_MAX_TOKENS
                     viewModel.saveMaxTokens(maxTokensInt)
+                    viewModel.saveSystemPrompt(editedSystemPrompt)
                     showSaved = true
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -264,6 +307,7 @@ fun SettingsScreen(
                     editedRegion = AppPreferences.DEFAULT_REGION
                     editedModelId = AppPreferences.DEFAULT_MODEL_ID
                     editedMaxTokens = AppPreferences.DEFAULT_MAX_TOKENS.toString()
+                    editedSystemPrompt = AppPreferences.DEFAULT_SYSTEM_PROMPT
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

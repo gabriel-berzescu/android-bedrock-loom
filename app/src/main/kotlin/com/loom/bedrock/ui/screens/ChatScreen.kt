@@ -40,6 +40,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -66,6 +67,7 @@ data class ChatUiState(
 class ChatViewModel @Inject constructor(
     private val bedrockClient: BedrockClient,
     private val conversationDao: ConversationDao,
+    private val appPreferences: com.loom.bedrock.data.preferences.AppPreferences,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     
@@ -263,10 +265,12 @@ class ChatViewModel @Inject constructor(
             val conversationHistory = _uiState.value.messages
                 .filter { !it.isStreaming }
                 .map { ChatMessage(it.role, it.content) }
-            
+
+            val systemPrompt = appPreferences.systemPrompt.first()
+
             val result = bedrockClient.chatStream(
                 conversationHistory = conversationHistory,
-                systemPrompt = "You are Claude Opus 4.5",
+                systemPrompt = systemPrompt,
                 onChunk = { chunk ->
                     val messages = _uiState.value.messages.toMutableList()
                     val lastIndex = messages.lastIndex

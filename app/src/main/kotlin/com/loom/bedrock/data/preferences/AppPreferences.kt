@@ -24,10 +24,12 @@ class AppPreferences @Inject constructor(
         private val AWS_REGION = stringPreferencesKey("aws_region")
         private val MODEL_ID = stringPreferencesKey("model_id")
         private val MAX_TOKENS = intPreferencesKey("max_tokens")
+        private val SYSTEM_PROMPT = stringPreferencesKey("system_prompt")
 
         const val DEFAULT_REGION = "eu-west-1"
         const val DEFAULT_MODEL_ID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
         const val DEFAULT_MAX_TOKENS = 256
+        const val DEFAULT_SYSTEM_PROMPT = "You are Claude Opus 4.5"
     }
     
     /**
@@ -48,6 +50,9 @@ class AppPreferences @Inject constructor(
 
     val maxTokens: Flow<Int> = context.dataStore.data
         .map { preferences -> preferences[MAX_TOKENS] ?: DEFAULT_MAX_TOKENS }
+
+    val systemPrompt: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[SYSTEM_PROMPT] ?: DEFAULT_SYSTEM_PROMPT }
 
     suspend fun setAwsCredentials(credentials: String) {
         context.dataStore.edit { preferences ->
@@ -70,6 +75,12 @@ class AppPreferences @Inject constructor(
     suspend fun setMaxTokens(maxTokens: Int) {
         context.dataStore.edit { preferences ->
             preferences[MAX_TOKENS] = maxTokens
+        }
+    }
+
+    suspend fun setSystemPrompt(systemPrompt: String) {
+        context.dataStore.edit { preferences ->
+            preferences[SYSTEM_PROMPT] = systemPrompt
         }
     }
 
