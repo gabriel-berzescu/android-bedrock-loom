@@ -516,6 +516,9 @@ fun MessageBubble(
                             value = editingContent,
                             onValueChange = onEditContentChange,
                             modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Sentences
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 unfocusedTextColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -552,15 +555,12 @@ fun MessageBubble(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        // Make code blocks scrollable horizontally
-                        Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                            MarkdownText(
-                                markdown = message.content,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                        MarkdownText(
+                            markdown = message.content,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
+                        )
                     }
                 }
                 
