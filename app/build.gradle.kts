@@ -95,6 +95,9 @@ dependencies {
     // Logging
     implementation(libs.timber)
 
+    // Markdown
+    implementation(libs.compose.markdown)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

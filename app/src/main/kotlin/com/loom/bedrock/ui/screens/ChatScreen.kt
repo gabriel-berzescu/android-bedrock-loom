@@ -3,10 +3,12 @@ package com.loom.bedrock.ui.screens
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,15 +16,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -55,6 +61,7 @@ data class UiMessage(
 
 data class ChatUiState(
     val conversationId: String = UUID.randomUUID().toString(),
+    val conversationTitle: String = "Chat",
     val messages: List<UiMessage> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -105,6 +112,7 @@ class ChatViewModel @Inject constructor(
                 }
                 _uiState.value = _uiState.value.copy(
                     conversationId = id,
+                    conversationTitle = conversationWithNodes.conversation.title,
                     messages = messages
                 )
             }
@@ -373,7 +381,7 @@ class ChatViewModel @Inject constructor(
 fun ChatScreen(
     onNavigateBack: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToTree: () -> Unit = {},
+    onNavigateToTree: (String) -> Unit = {},
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -410,14 +418,14 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chat") },
+                title = { Text(uiState.conversationTitle) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToTree) {
+                    IconButton(onClick = { onNavigateToTree(uiState.conversationId) }) {
                         Icon(Icons.Default.AccountTree, contentDescription = "View Tree")
                     }
                     IconButton(onClick = onNavigateToSettings) {
@@ -480,6 +488,7 @@ fun MessageBubble(
 ) {
     val isUser = message.role == ChatRole.USER
     var showMenu by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
     
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -495,7 +504,10 @@ fun MessageBubble(
                         bottomEnd = if (isUser) 4.dp else 16.dp
                     ))
                     .background(if (isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                    .combinedClickable(onClick = { }, onLongClick = { if (!message.isStreaming && !isLoading) showMenu = true })
+                    .combinedClickable(
+                        onClick = { },
+                        onLongClick = { if (!message.isStreaming && !isLoading) showMenu = true }
+                    )
                     .padding(12.dp)
             ) {
                 if (isEditing) {
@@ -533,8 +545,23 @@ fun MessageBubble(
                             color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 } else {
-                    Text(message.content, style = MaterialTheme.typography.bodyMedium,
-                        color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (isUser) {
+                        Text(
+                            text = message.content,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        // Make code blocks scrollable horizontally
+                        Box(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                            MarkdownText(
+                                markdown = message.content,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                        }
+                    }
                 }
                 
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
@@ -544,11 +571,27 @@ fun MessageBubble(
                             leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                             onClick = { showMenu = false; onStartEdit() }
                         )
+                        DropdownMenuItem(
+                            text = { Text("Copy") },
+                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                            onClick = {
+                                showMenu = false
+                                clipboardManager.setText(AnnotatedString(message.content))
+                            }
+                        )
                     } else {
                         DropdownMenuItem(
                             text = { Text("Regenerate") },
                             leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) },
                             onClick = { showMenu = false; onRegenerate() }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Copy") },
+                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                            onClick = {
+                                showMenu = false
+                                clipboardManager.setText(AnnotatedString(message.content))
+                            }
                         )
                     }
                 }
@@ -577,7 +620,10 @@ fun ChatInputBar(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Type a message...") },
                 maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Send,
+                    capitalization = KeyboardCapitalization.Sentences
+                ),
                 keyboardActions = KeyboardActions(onSend = { onSend() }),
                 enabled = !isLoading
             )

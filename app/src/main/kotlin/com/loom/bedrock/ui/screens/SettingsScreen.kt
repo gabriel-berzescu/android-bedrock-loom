@@ -39,6 +39,9 @@ class SettingsViewModel @Inject constructor(
     val maxTokens = appPreferences.maxTokens
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_MAX_TOKENS)
 
+    val temperature = appPreferences.temperature
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_TEMPERATURE)
+
     val systemPrompt = appPreferences.systemPrompt
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_SYSTEM_PROMPT)
 
@@ -66,6 +69,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun saveTemperature(temperature: Float) {
+        viewModelScope.launch {
+            appPreferences.setTemperature(temperature)
+        }
+    }
+
     fun saveSystemPrompt(systemPrompt: String) {
         viewModelScope.launch {
             appPreferences.setSystemPrompt(systemPrompt)
@@ -87,12 +96,14 @@ fun SettingsScreen(
     val region by viewModel.awsRegion.collectAsState()
     val modelId by viewModel.modelId.collectAsState()
     val maxTokens by viewModel.maxTokens.collectAsState()
+    val temperature by viewModel.temperature.collectAsState()
     val systemPrompt by viewModel.systemPrompt.collectAsState()
 
     var editedCredentials by remember(credentials) { mutableStateOf(credentials) }
     var editedRegion by remember(region) { mutableStateOf(region) }
     var editedModelId by remember(modelId) { mutableStateOf(modelId) }
     var editedMaxTokens by remember(maxTokens) { mutableStateOf(maxTokens.toString()) }
+    var editedTemperature by remember(temperature) { mutableStateOf(temperature.toString()) }
     var editedSystemPrompt by remember(systemPrompt) { mutableStateOf(systemPrompt) }
     var showSaved by remember { mutableStateOf(false) }
     
@@ -208,6 +219,21 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    OutlinedTextField(
+                        value = editedTemperature,
+                        onValueChange = { editedTemperature = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Temperature (0.0 - 1.0)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+
+                    Text(
+                        text = "Default: ${AppPreferences.DEFAULT_TEMPERATURE}. Lower = more focused, Higher = more creative",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -280,6 +306,8 @@ fun SettingsScreen(
                     viewModel.saveModelId(editedModelId)
                     val maxTokensInt = editedMaxTokens.toIntOrNull() ?: AppPreferences.DEFAULT_MAX_TOKENS
                     viewModel.saveMaxTokens(maxTokensInt)
+                    val temperatureFloat = editedTemperature.toFloatOrNull()?.coerceIn(0f, 1f) ?: AppPreferences.DEFAULT_TEMPERATURE
+                    viewModel.saveTemperature(temperatureFloat)
                     viewModel.saveSystemPrompt(editedSystemPrompt)
                     showSaved = true
                 },

@@ -1,40 +1,43 @@
 # 🌌 Android Bedrock Loom
 
+**Version 1.1**
+
 > *Weave realities through probabilistic space, anywhere you go.*
 
-**Android Bedrock Loom** is a mobile implementation of the [Loom interface](https://cyborgism.wiki/hypha/loom) for Android, powered by AWS Bedrock's foundation models. It brings the full multiverse navigation paradigm to your pocket—generate, branch, explore, and curate infinite possibilities from Claude, Titan, and other Bedrock models.
+**Android Bedrock Loom** is a mobile implementation of the [Loom interface](https://cyborgism.wiki/hypha/loom) for Android, powered by AWS Bedrock's foundation models. It brings the full multiverse navigation paradigm to your pocket—generate, branch, explore, and curate infinite possibilities from Claude and other Bedrock models.
 
 ## ✨ Features
 
-### 🌳 Full Tree Navigation
-- **Branch anywhere**: Tap any node to spawn new realities
-- **Visual multiverse map**: See your entire exploration tree at a glance
-- **Swipe navigation**: Fluid gesture-based timeline traversal
-- **Pinch to zoom**: Explore vast multiverses with intuitive controls
+### 💬 Chat Interface
+- **Real-time streaming**: Watch Claude's responses appear in real-time
+- **Markdown rendering**: Beautiful formatting with horizontal scrolling for code blocks and ASCII art
+- **Message editing**: Long-press any message to edit, regenerate, or copy
+- **Conversation titles**: Auto-generated titles that reflect your chat content
+- **Smart input**: Text input starts with uppercase by default
 
-### 🎲 Probabilistic Generation
-- **Multi-completion spawning**: Generate N branches simultaneously
-- **Temperature control**: Fine-tune the chaos dial from deterministic to wildly creative
-- **Token probability inspection**: See the logprobs behind each choice
-- **Beam search exploration**: Systematically explore high-probability paths
+### 🌳 Tree Navigation
+- **Branch anywhere**: Continue conversations from any point in the history
+- **Visual tree map**: See your entire conversation tree at a glance
+- **Continue from here**: Pick any node and continue from that point
+- **Multi-branch support**: Each message can have multiple child responses
 
-### 🎯 Selection & Curation
-- **Favorites & bookmarks**: Mark golden branches for later
-- **Tag system**: Organize your multiverse with custom labels
-- **Search across timelines**: Find that perfect branch you saw three realities ago
-- **Smart filtering**: Hide branches by criteria, focus on what matters
+### ⚙️ Configuration
+- **Model selection**: Choose your preferred Claude model from AWS Bedrock
+- **Temperature control**: Adjust creativity from 0.0 (focused) to 1.0 (creative), default 1.0
+- **Max tokens**: Configure response length
+- **System prompts**: Customize Claude's behavior
+- **Region selection**: Use any AWS Bedrock-enabled region
+
+### 💾 Persistence & Export
+- **Local-first**: All conversations stored on your device with Room database
+- **Import/Export**: Share conversations in JSON format
+- **Conversation management**: Rename, reload, and delete conversations
+- **Data privacy**: Your credentials and chats stay on your device
 
 ### ☁️ AWS Bedrock Integration
-- **Multiple models**: Claude 3.5 Sonnet, Claude 3 Opus, Amazon Titan, and more
-- **Streaming responses**: Watch realities unfold in real-time
-- **Cost tracking**: Monitor your token usage across explorations
-- **Offline queue**: Draft prompts offline, generate when connected
-
-### 💾 Persistence & Sync
-- **Local-first**: Your multiverses live on your device
-- **Export formats**: JSON tree, Markdown linear, HTML visualization
-- **Cloud backup**: Optional sync to S3 for cross-device weaving
-- **Share branches**: Export specific paths as shareable snippets
+- **Streaming responses**: Real-time message generation with ConverseStream API
+- **Latest models**: Support for Claude Opus 4.5 and other Bedrock models
+- **Secure credentials**: AWS credentials stored locally with DataStore
 
 ## 📱 Screenshots
 
@@ -89,116 +92,105 @@ cd android-bedrock-loom
 ### Configuration
 
 1. Launch the app and tap **Settings** ⚙️
-2. Enter your AWS credentials:
-   - **Region**: Your Bedrock-enabled region (e.g., `us-east-1`)
-   - **Access Key ID**: Your AWS access key
-   - **Secret Access Key**: Your AWS secret key
-3. Select your preferred default model
-4. Start weaving! 🧵
+2. Enter your AWS credentials in INI format:
+   ```
+   [default]
+   aws_access_key_id=YOUR_ACCESS_KEY
+   aws_secret_access_key=YOUR_SECRET_KEY
+   aws_session_token=YOUR_SESSION_TOKEN (optional)
+   ```
+3. Configure your preferences:
+   - **Region**: Your Bedrock-enabled region (default: `eu-west-1`)
+   - **Model ID**: Your preferred model (default: `global.anthropic.claude-opus-4-5-20251101-v1:0`)
+   - **Max Tokens**: Response length (default: `256`)
+   - **Temperature**: Creativity level 0.0-1.0 (default: `1.0`)
+   - **System Prompt**: Customize Claude's behavior
+4. Start chatting! 💬
 
 ## 🎮 Usage
 
-### Basic Weaving
+### Basic Usage
 
-1. **Start a thread**: Tap the ✏️ button and write your prompt
-2. **Generate branches**: Tap 🌳 to spawn N completions (configurable)
-3. **Navigate**: Tap any node to view its content, swipe to traverse
-4. **Branch deeper**: From any node, generate more continuations
-5. **Curate**: Star ⭐ the branches worth keeping
+1. **Start a conversation**: Tap the ➕ button from the conversation list
+2. **Send a message**: Type your message and tap the send button
+3. **View responses**: Watch Claude's response stream in real-time with markdown formatting
+4. **Edit & regenerate**: Long-press any message to:
+   - **Edit** your message and resend
+   - **Regenerate** Claude's response
+   - **Copy** message text to clipboard
+5. **View conversation tree**: Tap the tree icon to see your conversation branches
+6. **Branch from any point**: In tree view, select a node and tap "Continue from here"
 
-### Power User Features
+### Advanced Features
 
-#### Keyboard Shortcuts (with physical keyboard)
-| Key | Action |
-|-----|--------|
-| `Space` | Generate from current node |
-| `←/→` | Navigate siblings |
-| `↑/↓` | Navigate parent/child |
-| `S` | Star current node |
-| `E` | Edit current node |
-| `/` | Search |
+#### Conversation Management
+- **Rename**: Long-press a conversation to rename it
+- **Reload**: Refresh the conversation list to see updates
+- **Delete**: Swipe or long-press to delete conversations
+- **Import/Export**: Use the import/export buttons to share conversations as JSON files
 
-#### Custom Generation Parameters
-```
-Temperature: 0.0 ════●════ 2.0
-Top P:       0.0 ═══════●═ 1.0  
-Max Tokens:  [256] [512] [1024] [2048] [Custom]
-Branches:    [1] [3] [5] [8] [13]
-```
-
-#### LLM Programs (Advanced)
-Define reusable generation patterns:
-```yaml
-name: "Character Voice Explorer"
-system: "You are exploring different character voices."
-generations:
-  - prompt_suffix: " [speaking formally]"
-    temperature: 0.3
-  - prompt_suffix: " [speaking casually]"  
-    temperature: 0.7
-  - prompt_suffix: " [speaking poetically]"
-    temperature: 1.2
-```
+#### Tree Navigation
+- **Visual map**: See the full conversation tree structure
+- **Branch selection**: Tap any node to view its content
+- **Continue branching**: Select a node and continue the conversation from that point
+- **Multiple paths**: Explore different conversation directions from the same starting point
 
 ## 🏗️ Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                        Presentation Layer                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ TreeView    │  │ NodeEditor  │  │ SettingsScreen      │  │
-│  │ (Compose)   │  │ (Compose)   │  │ (Compose)           │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
-└─────────┼────────────────┼────────────────────┼──────────────┘
-          │                │                    │
-┌─────────┼────────────────┼────────────────────┼──────────────┐
-│         ▼                ▼                    ▼              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │                    ViewModels                        │    │
-│  │  LoomViewModel  │  NodeViewModel  │  SettingsVM     │    │
-│  └─────────────────────────┬───────────────────────────┘    │
-│                            │          Domain Layer           │
-│  ┌─────────────────────────┼───────────────────────────┐    │
-│  │                         ▼                           │    │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │    │
-│  │  │ LoomEngine   │  │ TreeManager  │  │ Exporter │  │    │
-│  │  └───────┬──────┘  └──────────────┘  └──────────┘  │    │
-│  └──────────┼──────────────────────────────────────────┘    │
-└─────────────┼────────────────────────────────────────────────┘
-              │
-┌─────────────┼────────────────────────────────────────────────┐
-│             ▼                  Data Layer                    │
-│  ┌──────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
-│  │ BedrockClient    │  │ TreeRepository  │  │ PrefsStore  │ │
-│  │ (AWS SDK)        │  │ (Room DB)       │  │ (DataStore) │ │
-│  └────────┬─────────┘  └────────┬────────┘  └──────┬──────┘ │
-│           │                     │                   │        │
-│           ▼                     ▼                   ▼        │
-│     [AWS Bedrock]         [SQLite]           [SharedPrefs]  │
-└──────────────────────────────────────────────────────────────┘
+│                     Presentation Layer (Jetpack Compose)     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │ ChatScreen   │  │ TreeScreen   │  │ SettingsScreen   │  │
+│  │              │  │              │  │                  │  │
+│  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
+└─────────┼──────────────────┼──────────────────┼─────────────┘
+          │                  │                  │
+┌─────────┼──────────────────┼──────────────────┼─────────────┐
+│         ▼                  ▼                  ▼             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                 ViewModels (Hilt)                    │   │
+│  │  ChatViewModel  │  TreeViewModel  │  SettingsVM     │   │
+│  └─────────────────────┬───────────────────────────────┘   │
+│                        │       Business Logic              │
+└────────────────────────┼───────────────────────────────────┘
+                         │
+┌────────────────────────┼───────────────────────────────────┐
+│                        ▼          Data Layer               │
+│  ┌──────────────┐  ┌───────────────┐  ┌────────────────┐ │
+│  │ BedrockClient│  │ ConversationDao│  │ AppPreferences │ │
+│  │ (AWS SDK)    │  │ (Room)        │  │ (DataStore)    │ │
+│  └──────┬───────┘  └───────┬───────┘  └────────┬───────┘ │
+│         │                  │                    │         │
+│         ▼                  ▼                    ▼         │
+│  [AWS Bedrock]       [SQLite DB]         [Preferences]   │
+│   ConverseStream    Node Tree Storage    Credentials     │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ### Key Components
 
 | Component | Responsibility |
 |-----------|----------------|
-| `LoomEngine` | Core branching logic, generation orchestration |
-| `TreeManager` | Tree data structure, navigation, manipulation |
-| `BedrockClient` | AWS Bedrock API communication, streaming |
-| `TreeRepository` | Persistence, caching, query optimization |
-| `TreeView` | Interactive tree visualization (Canvas + Compose) |
+| `ChatScreen` | Main chat interface with message list and input |
+| `TreeScreen` | Interactive tree visualization with Canvas |
+| `BedrockClient` | AWS Bedrock API communication with streaming support |
+| `ConversationDao` | Room database access for tree structure persistence |
+| `AppPreferences` | DataStore wrapper for settings and credentials |
+| `ChatViewModel` | Chat state management, message handling, API calls |
 
 ## 📦 Tech Stack
 
 - **Language**: Kotlin
-- **UI**: Jetpack Compose + Canvas for tree rendering
-- **Architecture**: MVVM + Clean Architecture
-- **DI**: Hilt
+- **UI**: Jetpack Compose with Material 3
+- **Architecture**: MVVM with Hilt dependency injection
 - **Async**: Kotlin Coroutines + Flow
-- **Database**: Room
+- **Database**: Room (SQLite)
 - **Preferences**: DataStore
-- **AWS**: AWS SDK for Kotlin (Bedrock)
-- **Serialization**: Kotlinx Serialization
+- **AWS**: AWS SDK for Kotlin (Bedrock Runtime)
+- **Serialization**: Kotlinx Serialization (JSON)
+- **Markdown**: compose-markdown for rich text rendering
+- **Canvas**: Compose Canvas for tree visualization
 
 ## 🤝 Contributing
 
@@ -214,20 +206,6 @@ git clone https://github.com/gabriel-berzescu/android-bedrock-loom.git
 # Create local.properties with your SDK path
 # Run on device/emulator
 ```
-
-### Roadmap
-
-- [x] Core tree data structure
-- [x] Bedrock API integration
-- [x] Basic tree visualization
-- [x] Node editing
-- [ ] Multi-model support
-- [ ] Logprobs visualization  
-- [ ] LLM programs
-- [ ] S3 cloud sync
-- [ ] Collaborative weaving (multiplayer)
-- [ ] Voice input for mobile weaving
-- [ ] Wear OS companion (quick branch from watch)
 
 ## 📄 License
 

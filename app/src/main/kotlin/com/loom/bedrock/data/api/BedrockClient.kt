@@ -42,6 +42,7 @@ class BedrockClient @Inject constructor(
             val region = appPreferences.awsRegion.first()
             val modelId = appPreferences.modelId.first()
             val maxTokens = appPreferences.maxTokens.first()
+            val temperature = appPreferences.temperature.first()
 
             val client = createClient(parsedCreds, region)
 
@@ -61,6 +62,7 @@ class BedrockClient @Inject constructor(
                 this.messages = messages
                 this.inferenceConfig {
                     this.maxTokens = maxTokens
+                    this.temperature = temperature
                 }
                 if (systemPrompt != null) {
                     this.system = listOf(
@@ -99,6 +101,7 @@ class BedrockClient @Inject constructor(
         val region: String
         val modelId: String
         val maxTokens: Int
+        val temperature: Float
 
         try {
             credentialsText = appPreferences.awsCredentials.first()
@@ -107,6 +110,7 @@ class BedrockClient @Inject constructor(
             region = appPreferences.awsRegion.first()
             modelId = appPreferences.modelId.first()
             maxTokens = appPreferences.maxTokens.first()
+            temperature = appPreferences.temperature.first()
         } catch (e: Exception) {
             return Result.failure(Exception("Failed to load settings: ${e.message}"))
         }
@@ -137,6 +141,7 @@ class BedrockClient @Inject constructor(
                 this.messages = messages
                 this.inferenceConfig {
                     this.maxTokens = maxTokens
+                    this.temperature = temperature
                 }
                 if (systemPrompt != null) {
                     this.system = listOf(

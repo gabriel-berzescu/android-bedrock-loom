@@ -16,8 +16,7 @@ import com.loom.bedrock.ui.screens.TreeScreen
  */
 object Routes {
     const val CONVERSATIONS = "conversations"
-    const val CHAT = "chat"
-    const val CHAT_WITH_ID = "chat/{conversationId}"
+    const val CHAT = "chat?conversationId={conversationId}"
     const val TREE = "tree/{conversationId}"
     const val SETTINGS = "settings"
 }
@@ -38,33 +37,31 @@ fun LoomApp() {
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                 onNavigateToChat = { conversationId ->
                     if (conversationId != null) {
-                        navController.navigate("chat/$conversationId")
+                        navController.navigate("chat?conversationId=$conversationId")
                     } else {
-                        navController.navigate(Routes.CHAT)
+                        navController.navigate("chat")
                     }
                 }
             )
         }
-        
-        // New chat (no conversation ID)
-        composable(Routes.CHAT) {
-            ChatScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                onNavigateToTree = { /* TODO: Tree view */ }
-            )
-        }
-        
-        // Existing chat (with conversation ID)
+
+        // Chat screen (handles both new and existing conversations)
         composable(
-            route = Routes.CHAT_WITH_ID,
-            arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
+            route = Routes.CHAT,
+            arguments = listOf(
+                navArgument("conversationId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
-            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             ChatScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                onNavigateToTree = { navController.navigate("tree/$conversationId") }
+                onNavigateToTree = { conversationId ->
+                    navController.navigate("tree/$conversationId")
+                }
             )
         }
         
@@ -72,12 +69,15 @@ fun LoomApp() {
         composable(
             route = Routes.TREE,
             arguments = listOf(navArgument("conversationId") { type = NavType.StringType })
-        ) {
+        ) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             TreeScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToNode = { nodeId ->
-                    // Navigate back to chat with selected node
-                    navController.popBackStack()
+                    // Navigate back to chat and force reload
+                    navController.navigate("chat?conversationId=$conversationId") {
+                        popUpTo("chat?conversationId=$conversationId") { inclusive = true }
+                    }
                 }
             )
         }
