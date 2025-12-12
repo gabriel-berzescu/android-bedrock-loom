@@ -8,7 +8,7 @@ import com.loom.bedrock.data.api.ChatRole
 
 @Database(
     entities = [ConversationEntity::class, NodeEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

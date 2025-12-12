@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.loom.bedrock.ui.screens.ChatScreen
 import com.loom.bedrock.ui.screens.ConversationListScreen
+import com.loom.bedrock.ui.screens.RecycleBinScreen
 import com.loom.bedrock.ui.screens.SettingsScreen
 import com.loom.bedrock.ui.screens.TreeScreen
 
@@ -19,6 +20,7 @@ object Routes {
     const val CHAT = "chat?conversationId={conversationId}"
     const val TREE = "tree/{conversationId}"
     const val SETTINGS = "settings"
+    const val RECYCLE_BIN = "recycleBin"
 }
 
 /**
@@ -35,6 +37,7 @@ fun LoomApp() {
         composable(Routes.CONVERSATIONS) {
             ConversationListScreen(
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                onNavigateToRecycleBin = { navController.navigate(Routes.RECYCLE_BIN) },
                 onNavigateToChat = { conversationId ->
                     if (conversationId != null) {
                         navController.navigate("chat?conversationId=$conversationId")
@@ -84,6 +87,12 @@ fun LoomApp() {
         
         composable(Routes.SETTINGS) {
             SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.RECYCLE_BIN) {
+            RecycleBinScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

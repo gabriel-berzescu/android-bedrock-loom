@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Settings
@@ -52,7 +53,8 @@ data class ExportedConversationEntity(
     val title: String,
     val createdAt: Long,
     val updatedAt: Long,
-    val activeNodeId: String?
+    val activeNodeId: String?,
+    val deletedAt: Long? = null
 )
 
 @Serializable
@@ -101,7 +103,8 @@ class ConversationListViewModel @Inject constructor(
                 title = conversationWithNodes.conversation.title,
                 createdAt = conversationWithNodes.conversation.createdAt,
                 updatedAt = conversationWithNodes.conversation.updatedAt,
-                activeNodeId = conversationWithNodes.conversation.activeNodeId
+                activeNodeId = conversationWithNodes.conversation.activeNodeId,
+                deletedAt = conversationWithNodes.conversation.deletedAt
             ),
             nodes = conversationWithNodes.nodes.map { node ->
                 ExportedNodeEntity(
@@ -128,7 +131,8 @@ class ConversationListViewModel @Inject constructor(
                 title = exported.conversation.title,
                 createdAt = exported.conversation.createdAt,
                 updatedAt = exported.conversation.updatedAt,
-                activeNodeId = exported.conversation.activeNodeId
+                activeNodeId = exported.conversation.activeNodeId,
+                deletedAt = exported.conversation.deletedAt
             )
 
             conversationDao.insertConversation(conversation)
@@ -158,6 +162,7 @@ class ConversationListViewModel @Inject constructor(
 @Composable
 fun ConversationListScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToRecycleBin: () -> Unit,
     onNavigateToChat: (conversationId: String?) -> Unit,
     viewModel: ConversationListViewModel = hiltViewModel()
 ) {
@@ -239,6 +244,9 @@ fun ConversationListScreen(
             TopAppBar(
                 title = { Text("Bedrock Loom") },
                 actions = {
+                    IconButton(onClick = onNavigateToRecycleBin) {
+                        Icon(Icons.Default.DeleteOutline, contentDescription = "Recycle Bin")
+                    }
                     IconButton(onClick = { importLauncher.launch("application/json") }) {
                         Icon(Icons.Default.FileUpload, contentDescription = "Import Conversation")
                     }

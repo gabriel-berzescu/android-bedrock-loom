@@ -13,7 +13,8 @@ data class ConversationEntity(
     val title: String,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val activeNodeId: String? = null  // Currently selected node in the tree
+    val activeNodeId: String? = null,  // Currently selected node in the tree
+    val deletedAt: Long? = null  // Timestamp when conversation was deleted (null if not deleted)
 )
 
 /**
