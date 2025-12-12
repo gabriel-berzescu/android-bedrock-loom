@@ -621,10 +621,9 @@ fun ChatInputBar(
                 placeholder = { Text("Type a message...") },
                 maxLines = 4,
                 keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Send,
+                    imeAction = ImeAction.Default,
                     capitalization = KeyboardCapitalization.Sentences
                 ),
-                keyboardActions = KeyboardActions(onSend = { onSend() }),
                 enabled = !isLoading
             )
             
