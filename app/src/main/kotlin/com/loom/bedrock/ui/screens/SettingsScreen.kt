@@ -182,7 +182,7 @@ fun SettingsScreen(
                         ),
                         placeholder = {
                             Text(
-                                text = "[profile_name]\naws_access_key_id=AKIA...\naws_secret_access_key=...\naws_session_token=...",
+                                text = "[profile_name]\naws_access_key_id=YOUR_KEY_ID\naws_secret_access_key=YOUR_SECRET\naws_session_token=...",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontFamily = FontFamily.Monospace
                                 )
