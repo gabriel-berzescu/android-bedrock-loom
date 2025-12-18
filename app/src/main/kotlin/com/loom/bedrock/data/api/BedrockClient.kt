@@ -8,6 +8,7 @@ import aws.sdk.kotlin.services.bedrockruntime.model.Message
 import aws.smithy.kotlin.runtime.auth.awscredentials.Credentials
 import aws.smithy.kotlin.runtime.auth.awscredentials.CredentialsProvider
 import aws.smithy.kotlin.runtime.collections.Attributes
+import aws.smithy.kotlin.runtime.content.Document
 import com.loom.bedrock.data.preferences.AppPreferences
 import com.loom.bedrock.data.preferences.ParsedCredentials
 import kotlinx.coroutines.flow.first
@@ -90,11 +91,18 @@ class BedrockClient @Inject constructor(
     
     /**
      * Stream a response from Claude (returns chunks as they arrive).
+     *
+     * @param conversationHistory List of previous messages in the conversation
+     * @param systemPrompt Optional system prompt
+     * @param onChunk Callback for text content chunks
+     * @param onThinkingChunk Callback for thinking/reasoning content chunks
+     * @return The assistant's full response text
      */
     suspend fun chatStream(
         conversationHistory: List<ChatMessage>,
         systemPrompt: String? = null,
-        onChunk: (String) -> Unit
+        onChunk: (String) -> Unit,
+        onThinkingChunk: (String) -> Unit = {}
     ): Result<String> {
         val credentialsText: String
         val parsedCreds: ParsedCredentials
@@ -102,6 +110,8 @@ class BedrockClient @Inject constructor(
         val modelId: String
         val maxTokens: Int
         val temperature: Float
+        val extendedThinkingEnabled: Boolean
+        val thinkingBudgetTokens: Int
 
         try {
             credentialsText = appPreferences.awsCredentials.first()
@@ -111,6 +121,8 @@ class BedrockClient @Inject constructor(
             modelId = appPreferences.modelId.first()
             maxTokens = appPreferences.maxTokens.first()
             temperature = appPreferences.temperature.first()
+            extendedThinkingEnabled = appPreferences.extendedThinkingEnabled.first()
+            thinkingBudgetTokens = appPreferences.thinkingBudgetTokens.first()
         } catch (e: Exception) {
             return Result.failure(Exception("Failed to load settings: ${e.message}"))
         }
@@ -141,12 +153,24 @@ class BedrockClient @Inject constructor(
                 this.messages = messages
                 this.inferenceConfig {
                     this.maxTokens = maxTokens
-                    this.temperature = temperature
+                    // Temperature must be 1.0 when extended thinking is enabled
+                    if (!extendedThinkingEnabled) {
+                        this.temperature = temperature
+                    }
                 }
                 if (systemPrompt != null) {
                     this.system = listOf(
                         aws.sdk.kotlin.services.bedrockruntime.model.SystemContentBlock.Text(systemPrompt)
                     )
+                }
+                // Add extended thinking config if enabled
+                if (extendedThinkingEnabled) {
+                    this.additionalModelRequestFields = Document(mapOf(
+                        "thinking" to Document(mapOf(
+                            "type" to Document("enabled"),
+                            "budget_tokens" to Document(thinkingBudgetTokens)
+                        ))
+                    ))
                 }
             }
             
@@ -155,10 +179,19 @@ class BedrockClient @Inject constructor(
                     when (event) {
                         is aws.sdk.kotlin.services.bedrockruntime.model.ConverseStreamOutput.ContentBlockDelta -> {
                             val delta = event.value.delta
-                            if (delta is aws.sdk.kotlin.services.bedrockruntime.model.ContentBlockDelta.Text) {
-                                val text = delta.value
-                                fullResponse.append(text)
-                                onChunk(text)
+                            when (delta) {
+                                is aws.sdk.kotlin.services.bedrockruntime.model.ContentBlockDelta.Text -> {
+                                    val text = delta.value
+                                    fullResponse.append(text)
+                                    onChunk(text)
+                                }
+                                is aws.sdk.kotlin.services.bedrockruntime.model.ContentBlockDelta.ReasoningContent -> {
+                                    val thinkingText = delta.value.asTextOrNull()
+                                    if (thinkingText != null) {
+                                        onThinkingChunk(thinkingText)
+                                    }
+                                }
+                                else -> { /* ignore other delta types */ }
                             }
                         }
                         else -> { /* ignore other events */ }

@@ -1,7 +1,11 @@
 package com.loom.bedrock.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -55,6 +59,7 @@ data class UiMessage(
     val id: String = UUID.randomUUID().toString(),
     val role: ChatRole,
     val content: String,
+    val thinkingContent: String = "",
     val isStreaming: Boolean = false,
     val parentId: String? = null
 )
@@ -285,6 +290,16 @@ class ChatViewModel @Inject constructor(
                     if (lastIndex >= 0 && messages[lastIndex].isStreaming) {
                         messages[lastIndex] = messages[lastIndex].copy(
                             content = messages[lastIndex].content + chunk
+                        )
+                        _uiState.value = _uiState.value.copy(messages = messages)
+                    }
+                },
+                onThinkingChunk = { thinkingChunk ->
+                    val messages = _uiState.value.messages.toMutableList()
+                    val lastIndex = messages.lastIndex
+                    if (lastIndex >= 0 && messages[lastIndex].isStreaming) {
+                        messages[lastIndex] = messages[lastIndex].copy(
+                            thinkingContent = messages[lastIndex].thinkingContent + thinkingChunk
                         )
                         _uiState.value = _uiState.value.copy(messages = messages)
                     }
@@ -538,7 +553,9 @@ fun MessageBubble(
                             modifier = Modifier.size(16.dp), strokeWidth = 2.dp,
                             color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Text("Thinking...", style = MaterialTheme.typography.bodyMedium, 
+                        // Show "Thinking..." only if there's thinking content being streamed, otherwise generic loading
+                        val loadingText = if (message.thinkingContent.isNotEmpty()) "Thinking..." else "..."
+                        Text(loadingText, style = MaterialTheme.typography.bodyMedium,
                             color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 } else {
@@ -549,12 +566,18 @@ fun MessageBubble(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        MarkdownText(
-                            markdown = message.content,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Column {
+                            // Show thinking block if there's thinking content
+                            if (message.thinkingContent.isNotEmpty()) {
+                                ThinkingBlock(thinkingContent = message.thinkingContent)
+                            }
+                            MarkdownText(
+                                markdown = message.content,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             )
-                        )
+                        }
                     }
                 }
                 
@@ -590,6 +613,62 @@ fun MessageBubble(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ThinkingBlock(
+    thinkingContent: String,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                contentDescription = if (expanded) "Collapse" else "Expand",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp)
+            )
+            Icon(
+                imageVector = Icons.Default.Psychology,
+                contentDescription = "Thinking",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = "Thinking",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Text(
+                text = thinkingContent,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+            )
         }
     }
 }

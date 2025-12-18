@@ -3,6 +3,7 @@ package com.loom.bedrock.data.preferences
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -27,12 +28,16 @@ class AppPreferences @Inject constructor(
         private val MAX_TOKENS = intPreferencesKey("max_tokens")
         private val TEMPERATURE = floatPreferencesKey("temperature")
         private val SYSTEM_PROMPT = stringPreferencesKey("system_prompt")
+        private val EXTENDED_THINKING_ENABLED = booleanPreferencesKey("extended_thinking_enabled")
+        private val THINKING_BUDGET_TOKENS = intPreferencesKey("thinking_budget_tokens")
 
         const val DEFAULT_REGION = "eu-west-1"
         const val DEFAULT_MODEL_ID = "global.anthropic.claude-opus-4-5-20251101-v1:0"
         const val DEFAULT_MAX_TOKENS = 256
         const val DEFAULT_TEMPERATURE = 1.0f
         const val DEFAULT_SYSTEM_PROMPT = "You are Claude Opus 4.5"
+        const val DEFAULT_EXTENDED_THINKING_ENABLED = false
+        const val DEFAULT_THINKING_BUDGET_TOKENS = 4096
     }
     
     /**
@@ -59,6 +64,12 @@ class AppPreferences @Inject constructor(
 
     val systemPrompt: Flow<String> = context.dataStore.data
         .map { preferences -> preferences[SYSTEM_PROMPT] ?: DEFAULT_SYSTEM_PROMPT }
+
+    val extendedThinkingEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences -> preferences[EXTENDED_THINKING_ENABLED] ?: DEFAULT_EXTENDED_THINKING_ENABLED }
+
+    val thinkingBudgetTokens: Flow<Int> = context.dataStore.data
+        .map { preferences -> preferences[THINKING_BUDGET_TOKENS] ?: DEFAULT_THINKING_BUDGET_TOKENS }
 
     suspend fun setAwsCredentials(credentials: String) {
         context.dataStore.edit { preferences ->
@@ -93,6 +104,18 @@ class AppPreferences @Inject constructor(
     suspend fun setSystemPrompt(systemPrompt: String) {
         context.dataStore.edit { preferences ->
             preferences[SYSTEM_PROMPT] = systemPrompt
+        }
+    }
+
+    suspend fun setExtendedThinkingEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[EXTENDED_THINKING_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setThinkingBudgetTokens(budgetTokens: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[THINKING_BUDGET_TOKENS] = budgetTokens
         }
     }
 

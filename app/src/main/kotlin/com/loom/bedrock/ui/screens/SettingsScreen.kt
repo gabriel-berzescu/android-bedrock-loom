@@ -45,6 +45,12 @@ class SettingsViewModel @Inject constructor(
     val systemPrompt = appPreferences.systemPrompt
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_SYSTEM_PROMPT)
 
+    val extendedThinkingEnabled = appPreferences.extendedThinkingEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_EXTENDED_THINKING_ENABLED)
+
+    val thinkingBudgetTokens = appPreferences.thinkingBudgetTokens
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppPreferences.DEFAULT_THINKING_BUDGET_TOKENS)
+
     fun saveCredentials(credentials: String) {
         viewModelScope.launch {
             appPreferences.setAwsCredentials(credentials)
@@ -81,6 +87,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun saveExtendedThinkingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            appPreferences.setExtendedThinkingEnabled(enabled)
+        }
+    }
+
+    fun saveThinkingBudgetTokens(budgetTokens: Int) {
+        viewModelScope.launch {
+            appPreferences.setThinkingBudgetTokens(budgetTokens)
+        }
+    }
+
     fun validateCredentials(credentials: String): Boolean {
         return appPreferences.parseCredentials(credentials) != null
     }
@@ -98,6 +116,8 @@ fun SettingsScreen(
     val maxTokens by viewModel.maxTokens.collectAsState()
     val temperature by viewModel.temperature.collectAsState()
     val systemPrompt by viewModel.systemPrompt.collectAsState()
+    val extendedThinkingEnabled by viewModel.extendedThinkingEnabled.collectAsState()
+    val thinkingBudgetTokens by viewModel.thinkingBudgetTokens.collectAsState()
 
     var editedCredentials by remember(credentials) { mutableStateOf(credentials) }
     var editedRegion by remember(region) { mutableStateOf(region) }
@@ -105,6 +125,8 @@ fun SettingsScreen(
     var editedMaxTokens by remember(maxTokens) { mutableStateOf(maxTokens.toString()) }
     var editedTemperature by remember(temperature) { mutableStateOf(temperature.toString()) }
     var editedSystemPrompt by remember(systemPrompt) { mutableStateOf(systemPrompt) }
+    var editedExtendedThinkingEnabled by remember(extendedThinkingEnabled) { mutableStateOf(extendedThinkingEnabled) }
+    var editedThinkingBudgetTokens by remember(thinkingBudgetTokens) { mutableStateOf(thinkingBudgetTokens.toString()) }
     var showSaved by remember { mutableStateOf(false) }
     
     val credentialsValid = editedCredentials.isBlank() || viewModel.validateCredentials(editedCredentials)
@@ -238,6 +260,66 @@ fun SettingsScreen(
                 }
             }
 
+            // Extended Thinking Section
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Extended Thinking",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Enable Extended Thinking",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "Shows Claude's reasoning process",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = editedExtendedThinkingEnabled,
+                            onCheckedChange = { editedExtendedThinkingEnabled = it }
+                        )
+                    }
+
+                    if (editedExtendedThinkingEnabled) {
+                        OutlinedTextField(
+                            value = editedThinkingBudgetTokens,
+                            onValueChange = { editedThinkingBudgetTokens = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Thinking Budget (tokens)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        Text(
+                            text = "Min: 1024. Higher = more thorough reasoning. Must be less than Max Output Tokens.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Text(
+                            text = "Note: Temperature is ignored when thinking is enabled (defaults to 1.0)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                }
+            }
+
             // System Prompt Section
             Card(
                 modifier = Modifier.fillMaxWidth()
@@ -310,6 +392,9 @@ fun SettingsScreen(
                     val temperatureFloat = editedTemperature.toFloatOrNull()?.coerceIn(0f, 1f) ?: AppPreferences.DEFAULT_TEMPERATURE
                     viewModel.saveTemperature(temperatureFloat)
                     viewModel.saveSystemPrompt(editedSystemPrompt)
+                    viewModel.saveExtendedThinkingEnabled(editedExtendedThinkingEnabled)
+                    val budgetTokensInt = editedThinkingBudgetTokens.toIntOrNull()?.coerceAtLeast(1024) ?: AppPreferences.DEFAULT_THINKING_BUDGET_TOKENS
+                    viewModel.saveThinkingBudgetTokens(budgetTokensInt)
                     showSaved = true
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -336,7 +421,10 @@ fun SettingsScreen(
                     editedRegion = AppPreferences.DEFAULT_REGION
                     editedModelId = AppPreferences.DEFAULT_MODEL_ID
                     editedMaxTokens = AppPreferences.DEFAULT_MAX_TOKENS.toString()
+                    editedTemperature = AppPreferences.DEFAULT_TEMPERATURE.toString()
                     editedSystemPrompt = AppPreferences.DEFAULT_SYSTEM_PROMPT
+                    editedExtendedThinkingEnabled = AppPreferences.DEFAULT_EXTENDED_THINKING_ENABLED
+                    editedThinkingBudgetTokens = AppPreferences.DEFAULT_THINKING_BUDGET_TOKENS.toString()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
