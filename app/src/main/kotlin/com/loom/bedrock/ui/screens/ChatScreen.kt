@@ -113,7 +113,7 @@ class ChatViewModel @Inject constructor(
                 val linearPath = buildLinearPath(nodes, activeNodeId)
 
                 val messages = linearPath.map {
-                    UiMessage(id = it.id, role = it.role, content = it.content, parentId = it.parentId)
+                    UiMessage(id = it.id, role = it.role, content = it.content, thinkingContent = it.thinkingContent, parentId = it.parentId)
                 }
                 _uiState.value = _uiState.value.copy(
                     conversationId = id,
@@ -377,6 +377,7 @@ class ChatViewModel @Inject constructor(
                 parentId = message.parentId,
                 role = message.role,
                 content = message.content,
+                thinkingContent = message.thinkingContent,
                 branchIndex = branchIndex
             )
         )

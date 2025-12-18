@@ -24,6 +24,13 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Add thinkingContent column to nodes table for extended thinking
+            db.execSQL("ALTER TABLE nodes ADD COLUMN thinkingContent TEXT NOT NULL DEFAULT ''")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): LoomDatabase {
@@ -32,7 +39,7 @@ object DatabaseModule {
             LoomDatabase::class.java,
             "loom_database"
         )
-        .addMigrations(MIGRATION_2_3)
+        .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
         .fallbackToDestructiveMigration()
         .build()
     }

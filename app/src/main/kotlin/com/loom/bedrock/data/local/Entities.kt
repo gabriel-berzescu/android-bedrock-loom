@@ -46,6 +46,7 @@ data class NodeEntity(
     val parentId: String?,  // null for root nodes
     val role: ChatRole,
     val content: String,
+    val thinkingContent: String = "",  // Extended thinking/reasoning content
     val createdAt: Long = System.currentTimeMillis(),
     val branchIndex: Int = 0  // Which sibling branch this is (0, 1, 2...)
 )
