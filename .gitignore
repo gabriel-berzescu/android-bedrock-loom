@@ -106,3 +106,6 @@ Desktop.ini
 
 # Kotlin
 .kotlin/
+
+# Claude
+.claude
