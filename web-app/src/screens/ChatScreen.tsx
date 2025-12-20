@@ -255,8 +255,8 @@ export default function ChatScreen() {
     setEditingMessageId(null)
     setEditContent('')
 
-    // Regenerate response
-    await regenerateFromMessage(keptMessages[keptMessages.length - 1])
+    // Regenerate response - pass the updated messages to avoid stale state
+    await regenerateFromMessage(keptMessages[keptMessages.length - 1], keptMessages)
   }
 
   const handleCancelEdit = () => {
@@ -279,10 +279,13 @@ export default function ChatScreen() {
     await regenerateFromMessage(userMessage)
   }
 
-  const regenerateFromMessage = async (userMessage: UiMessage) => {
+  const regenerateFromMessage = async (userMessage: UiMessage, messagesOverride?: UiMessage[]) => {
     if (!conversationId) return
 
     setIsLoading(true)
+
+    // Use provided messages or fall back to current state
+    const currentMessages = messagesOverride ?? messages
 
     // Create streaming placeholder
     const placeholderId = crypto.randomUUID()
@@ -299,8 +302,8 @@ export default function ChatScreen() {
       abortControllerRef.current = new AbortController()
 
       // Build conversation history up to user message
-      const userIndex = messages.findIndex((m) => m.id === userMessage.id)
-      const history = messages.slice(0, userIndex + 1).map((m) => ({
+      const userIndex = currentMessages.findIndex((m) => m.id === userMessage.id)
+      const history = currentMessages.slice(0, userIndex + 1).map((m) => ({
         role: m.role,
         content: m.content,
       }))
